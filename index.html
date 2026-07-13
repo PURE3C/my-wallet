@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Income & Expense Tracker</title>
+  <style>
+    /* ========== Global Style ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Sarabun', 'Prompt', sans-serif;
+    }
+
+    :root {
+      --bg: #f4f7f6;
+      --card: #ffffff;
+      --green: #2eaf7d;
+      --red: #e5646e;
+      --text: #33415c;
+      --muted: #8d99ae;
+      --border: #e8eef0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    /* ========== Card ทั่วไป ========== */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(51, 65, 92, 0.06);
+    }
+
+    /* ========== Dashboard สรุปยอด ========== */
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .summary .balance-box {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--bg);
+    }
+
+    .summary .box {
+      text-align: center;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--bg);
+    }
+
+    .summary .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .summary .amount {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .balance-box .amount { font-size: 1.6rem; }
+
+    .income-text  { color: var(--green); }
+    .expense-text { color: var(--red); }
+
+    /* ========== ฟอร์มกรอกข้อมูล ========== */
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--green); }
+
+    /* ปุ่มเลือกประเภท รายรับ/รายจ่าย */
+    .type-toggle {
+      display: flex;
+      gap: 10px;
+    }
+
+    .type-btn {
+      flex: 1;
+      padding: 11px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      font-size: 0.95rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .type-btn.active-income {
+      background: #e6f7f0;
+      border-color: var(--green);
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .type-btn.active-expense {
+      background: #fdecee;
+      border-color: var(--red);
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      background: var(--text);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .submit-btn:hover { opacity: 0.88; }
+
+    /* ========== ประวัติรายการ ========== */
+    .history-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--bg);
+      border-left: 4px solid var(--green);
+    }
+
+    .history-item.expense { border-left-color: var(--red); }
+
+    .item-info .name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .item-info .date {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .item-amount {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .delete-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #fdecee;
+      color: var(--red);
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+
+    /* ========== Responsive มือถือ ========== */
+    @media (max-width: 400px) {
+      body { padding: 16px 10px; }
+      .card { padding: 16px; }
+      .balance-box .amount { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 บันทึกรายรับ-รายจ่าย</h1>
+
+    <!-- ===== Dashboard สรุปยอด ===== -->
+    <div class="card summary">
+      <div class="balance-box">
+        <div class="label">ยอดเงินคงเหลือ</div>
+        <div class="amount" id="balance">0.00 ฿</div>
+      </div>
+      <div class="box">
+        <div class="label">รายรับรวม</div>
+        <div class="amount income-text" id="totalIncome">0.00 ฿</div>
+      </div>
+      <div class="box">
+        <div class="label">รายจ่ายรวม</div>
+        <div class="amount expense-text" id="totalExpense">0.00 ฿</div>
+      </div>
+    </div>
+
+    <!-- ===== ฟอร์มกรอกข้อมูล ===== -->
+    <div class="card">
+      <form id="transactionForm">
+        <div class="form-group">
+          <label for="name">ชื่อรายการ</label>
+          <input type="text" id="name" placeholder="เช่น ค่าอาหารกลางวัน" required />
+        </div>
+
+        <div class="form-group">
+          <label for="amount">จำนวนเงิน (บาท)</label>
+          <input type="number" id="amount" placeholder="0.00" min="0.01" step="0.01" required />
+        </div>
+
+        <div class="form-group">
+          <label>ประเภทรายการ</label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn active-income" id="incomeBtn">➕ รายรับ</button>
+            <button type="button" class="type-btn" id="expenseBtn">➖ รายจ่าย</button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">บันทึกรายการ</button>
+      </form>
+    </div>
+
+    <!-- ===== ประวัติรายการ ===== -->
+    <div class="card">
+      <div class="history-title">📋 ประวัติรายการ</div>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+  </div>
+
+  <script>
+    // ========== ตัวแปรหลัก ==========
+    const STORAGE_KEY = 'transactions';
+    // โหลดข้อมูลจาก LocalStorage (ถ้าไม่มีให้เป็น array ว่าง)
+    let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let selectedType = 'income'; // ประเภทที่เลือกอยู่ (ค่าเริ่มต้น: รายรับ)
+
+    // ========== Element ต่าง ๆ ==========
+    const form = document.getElementById('transactionForm');
+    const nameInput = document.getElementById('name');
+    const amountInput = document.getElementById('amount');
+    const incomeBtn = document.getElementById('incomeBtn');
+    const expenseBtn = document.getElementById('expenseBtn');
+    const historyList = document.getElementById('historyList');
+    const balanceEl = document.getElementById('balance');
+    const totalIncomeEl = document.getElementById('totalIncome');
+    const totalExpenseEl = document.getElementById('totalExpense');
+
+    // ========== ฟังก์ชันจัดรูปแบบตัวเลขเป็นเงินบาท ==========
+    function formatMoney(num) {
+      return num.toLocaleString('th-TH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' ฿';
+    }
+
+    // ========== บันทึกข้อมูลลง LocalStorage ==========
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    }
+
+    // ========== อัปเดต Dashboard สรุปยอด ==========
+    function updateSummary() {
+      // รวมยอดรายรับและรายจ่ายแยกกัน
+      const income = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+      const expense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+      const balance = income - expense;
+
+      totalIncomeEl.textContent = formatMoney(income);
+      totalExpenseEl.textContent = formatMoney(expense);
+      balanceEl.textContent = formatMoney(balance);
+
+      // ยอดคงเหลือ: บวก = เขียว, ติดลบ = แดง
+      balanceEl.className = 'amount ' + (balance < 0 ? 'expense-text' : 'income-text');
+    }
+
+    // ========== แสดงประวัติรายการ (ล่าสุดขึ้นก่อน) ==========
+    function renderHistory() {
+      historyList.innerHTML = '';
+
+      // ถ้าไม่มีรายการ แสดงข้อความว่าง
+      if (transactions.length === 0) {
+        historyList.innerHTML = '<li class="empty-msg">ยังไม่มีรายการบันทึก</li>';
+        return;
+      }
+
+      // เรียงจากรายการล่าสุด -> เก่าสุด
+      [...transactions].reverse().forEach(t => {
+        const li = document.createElement('li');
+        li.className = 'history-item ' + t.type;
+
+        const sign = t.type === 'income' ? '+' : '−';
+        const colorClass = t.type === 'income' ? 'income-text' : 'expense-text';
+
+        li.innerHTML = `
+          <div class="item-info">
+            <div class="name"></div>
+            <div class="date">${t.date}</div>
+          </div>
+          <div class="item-right">
+            <span class="item-amount ${colorClass}">${sign}${formatMoney(t.amount)}</span>
+            <button class="delete-btn" title="ลบรายการ">🗑️</button>
+          </div>
+        `;
+
+        // ใช้ textContent เพื่อป้องกัน XSS จากชื่อรายการ
+        li.querySelector('.name').textContent = t.name;
+        // ผูกปุ่มลบกับ id ของรายการ
+        li.querySelector('.delete-btn').addEventListener('click', () => deleteTransaction(t.id));
+
+        historyList.appendChild(li);
+      });
+    }
+
+    // ========== อัปเดตทั้งหน้า (สรุปยอด + ประวัติ + บันทึก) ==========
+    function refresh() {
+      saveToStorage();
+      updateSummary();
+      renderHistory();
+    }
+
+    // ========== ลบรายการตาม id ==========
+    function deleteTransaction(id) {
+      transactions = transactions.filter(t => t.id !== id);
+      refresh();
+    }
+
+    // ========== สลับปุ่มเลือกประเภท ==========
+    incomeBtn.addEventListener('click', () => {
+      selectedType = 'income';
+      incomeBtn.className = 'type-btn active-income';
+      expenseBtn.className = 'type-btn';
+    });
+
+    expenseBtn.addEventListener('click', () => {
+      selectedType = 'expense';
+      expenseBtn.className = 'type-btn active-expense';
+      incomeBtn.className = 'type-btn';
+    });
+
+    // ========== เมื่อกดปุ่ม "บันทึกรายการ" ==========
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // ป้องกันหน้ารีโหลด
+
+      const name = nameInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+
+      // ตรวจสอบความถูกต้องของข้อมูล
+      if (!name || isNaN(amount) || amount <= 0) {
+        alert('กรุณากรอกชื่อรายการและจำนวนเงินให้ถูกต้อง');
+        return;
+      }
+
+      // สร้างรายการใหม่แล้วเพิ่มเข้า array
+      transactions.push({
+        id: Date.now(), // ใช้ timestamp เป็น id ไม่ซ้ำกัน
+        name,
+        amount,
+        type: selectedType,
+        date: new Date().toLocaleString('th-TH', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })
+      });
+
+      form.reset(); // ล้างฟอร์ม
+      refresh();
+    });
+
+    // ========== เริ่มต้น: แสดงข้อมูลที่บันทึกไว้ ==========
+    updateSummary();
+    renderHistory();
+  </script>
+</body>
+</html>
