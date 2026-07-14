@@ -1,84 +1,555 @@
-<div class="glass rounded-2xl mt-6 px-4 md:px-6 py-4">
-  <div class="flex items-center justify-center gap-4 sm:gap-8 mb-4">
-    <div class="text-center flex-1 sm:flex-none">
-      <p id="stat-pending" class="text-2xl font-bold text-amber-300 glow-amber">0</p>
-      <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">ค้างอยู่</p>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KMITL Homework">
+<title>KMITL Homework</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * {
+    font-family: 'Segoe UI', 'Kanit', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: linear-gradient(-45deg, #000000, #1a0e00, #0d0d0d, #24130a);
+    background-size: 400% 400%;
+    animation: bgShift 18s ease infinite;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+  @keyframes bgShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* กัน iOS ซูมหน้าจอเองตอนแตะ input (ต้อง >= 16px) */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ปุ่มทุกปุ่มแตะง่าย ขนาดขั้นต่ำ 44px ตามมาตรฐาน touch target */
+  button { min-height: 44px; touch-action: manipulation; }
+  .check-btn, .del-btn { min-height: 0; min-width: 44px; min-height: 44px; }
+
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,140,0,0.12);
+  }
+
+  .glow-orange { text-shadow: 0 0 18px rgba(255,120,0,0.9), 0 0 40px rgba(255,120,0,0.45); }
+  .glow-amber  { text-shadow: 0 0 18px rgba(255,190,60,0.9), 0 0 40px rgba(255,190,60,0.45); }
+
+  .star {
+    position: fixed; border-radius: 50%; background: #ffb866;
+    pointer-events: none; z-index: 0;
+    animation: twinkle var(--d) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: .1; transform: scale(.8); }
+    50%     { opacity: .9; transform: scale(1.3); }
+  }
+
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(90px);
+    pointer-events: none; z-index: 0; opacity: .3;
+    animation: float 14s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33%     { transform: translate(40px,-50px) scale(1.15); }
+    66%     { transform: translate(-30px,30px) scale(.9); }
+  }
+
+  /* มือถือ: ลด blur ประหยัดแบต + GPU */
+  @media (max-width: 640px) {
+    .orb { filter: blur(60px); opacity: .22; }
+  }
+
+  /* ผู้ใช้ที่ตั้งค่าลดอนิเมชัน */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  @keyframes neonPulse {
+    0%,100% { filter: brightness(1); }
+    50%     { filter: brightness(1.4); }
+  }
+  .neon-title { animation: neonPulse 2.5s ease-in-out infinite; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(24px) scale(.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .task-card { animation: slideIn .45s cubic-bezier(.22,1,.36,1) both; }
+
+  @keyframes slideOut {
+    to { opacity: 0; transform: translateX(60px) scale(.92); max-height: 0; margin: 0; padding: 0; }
+  }
+  .task-leaving { animation: slideOut .4s ease forwards; overflow: hidden; }
+
+  @keyframes urgentPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,60,30,.5); }
+    50%     { box-shadow: 0 0 24px 4px rgba(255,60,30,.6); }
+  }
+  .urgent { animation: urgentPulse 1.4s ease-in-out infinite; }
+
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    animation: shimmerMove 2s linear infinite;
+  }
+  @keyframes shimmerMove { from { transform: translateX(-100%);} to { transform: translateX(100%);} }
+
+  .check-btn { transition: all .3s cubic-bezier(.34,1.56,.64,1); }
+  .check-btn:active { transform: scale(1.2) rotate(8deg); }
+  .check-btn.done { background: linear-gradient(135deg,#ff7a00,#ffb800); border-color: transparent; color:#000; }
+
+  @keyframes popNum { 0%{transform:scale(1);} 40%{transform:scale(1.35);} 100%{transform:scale(1);} }
+  .pop { animation: popNum .4s ease; }
+
+  @keyframes toastIn { from{opacity:0; transform:translateY(20px) scale(.9);} to{opacity:1; transform:translateY(0) scale(1);} }
+  @keyframes toastOut { to{opacity:0; transform:translateY(10px) scale(.9);} }
+  .toast { animation: toastIn .35s ease; }
+  .toast-out { animation: toastOut .35s ease forwards; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,122,0,.4); border-radius: 8px; }
+
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 48px;
+  }
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(.8) sepia(1) saturate(3) hue-rotate(-15deg); cursor: pointer; }
+
+  .chip { transition: all .25s ease; cursor: pointer; }
+  .chip:active { transform: scale(.95); }
+  .chip.active-low  { background: rgba(255,200,90,.15); border-color: #ffc85a; color: #ffc85a; box-shadow: 0 0 14px rgba(255,200,90,.35); }
+  .chip.active-mid  { background: rgba(255,140,0,.18);  border-color: #ff8c00; color: #ff9d2e; box-shadow: 0 0 14px rgba(255,140,0,.4); }
+  .chip.active-high { background: rgba(255,60,30,.18);  border-color: #ff3c1e; color: #ff5c40; box-shadow: 0 0 14px rgba(255,60,30,.45); }
+
+  .filter-btn { transition: all .25s ease; white-space: nowrap; flex-shrink: 0; }
+  .filter-btn.active {
+    background: linear-gradient(90deg, rgba(255,122,0,.35), rgba(255,184,0,.3));
+    border-color: rgba(255,140,0,.6);
+    box-shadow: 0 0 16px rgba(255,122,0,.35);
+    color: #fff;
+  }
+
+  /* แถบฟิลเตอร์เลื่อนซ้าย-ขวาได้บนจอแคบ ซ่อน scrollbar */
+  .filter-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-scroll::-webkit-scrollbar { display: none; }
+
+  /* รองรับจอมีรอยบาก (notch) */
+  .safe-pad {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-top: max(2rem, env(safe-area-inset-top));
+  }
+  .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+  .toast-safe { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+</style>
+</head>
+<body class="text-stone-200 relative">
+
+<canvas id="confetti" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+<div class="orb w-96 h-96 bg-orange-600 -top-20 -left-20"></div>
+<div class="orb w-80 h-80 bg-amber-500 top-1/3 -right-24" style="animation-delay:-5s"></div>
+<div class="orb w-72 h-72 bg-red-600 bottom-0 left-1/4" style="animation-delay:-9s"></div>
+
+<div class="max-w-2xl mx-auto safe-pad py-8 md:py-10 relative z-10">
+
+  <!-- ============ HEADER ============ -->
+  <header class="text-center mb-8 md:mb-10">
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight neon-title">
+      <span class="glow-orange text-orange-500">KMITL</span> <span class="glow-amber text-amber-300">HOMEWORK</span>
+    </h1>
+    <p class="text-stone-400 mt-2 text-xs sm:text-sm md:text-base px-2">เช็กลิสต์การบ้าน · นับถอยหลังเดดไลน์แบบเรียลไทม์ · ไม่มีข้ออ้าง ⚡</p>
+    <p id="clock" class="text-amber-300/70 text-[10px] sm:text-xs mt-2 font-mono tracking-widest"></p>
+
+    <!-- Progress stats -->
+    <div class="glass rounded-2xl mt-5 md:mt-6 px-4 sm:px-6 py-4">
+      <div class="flex items-center justify-center gap-4 sm:gap-8 mb-4">
+        <div class="text-center flex-1 sm:flex-none">
+          <p id="stat-pending" class="text-xl sm:text-2xl font-bold text-amber-300 glow-amber">0</p>
+          <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">ค้างอยู่</p>
+        </div>
+        <div class="w-px h-10 bg-orange-500/20"></div>
+        <div class="text-center flex-1 sm:flex-none">
+          <p id="stat-done" class="text-xl sm:text-2xl font-bold text-orange-500 glow-orange">0</p>
+          <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">เสร็จแล้ว</p>
+        </div>
+        <div class="w-px h-10 bg-orange-500/20"></div>
+        <div class="text-center flex-1 sm:flex-none sm:min-w-[70px]">
+          <p id="stat-percent" class="text-xl sm:text-2xl font-bold text-yellow-300">0%</p>
+          <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">ความคืบหน้า</p>
+        </div>
+      </div>
+      <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full rounded-full shimmer bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 transition-all duration-700" style="width:0%"></div>
+      </div>
+      <p id="cheer" class="text-xs text-stone-500 mt-2 h-4"></p>
     </div>
-    <div class="w-px h-10 bg-orange-500/20"></div>
-    <div class="text-center flex-1 sm:flex-none">
-      <p id="stat-done" class="text-2xl font-bold text-orange-500 glow-orange">0</p>
-      <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">เสร็จแล้ว</p>
+  </header>
+
+  <!-- ============ ADD TASK FORM ============ -->
+  <section class="glass rounded-2xl p-4 sm:p-6 mb-6 md:mb-8 transition-all duration-300 hover:border-orange-400/40">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-orange-400 mb-4">＋ เพิ่มการบ้านใหม่</h2>
+
+    <form id="task-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <label for="input-title" class="block text-xs text-stone-400 mb-1.5">รายละเอียดงาน</label>
+        <input id="input-title" type="text" required maxlength="80"
+               placeholder="เช่น ทำโจทย์แคลคูลัสให้เสร็จ (บทที่ 4)"
+               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-stone-500
+                      outline-none transition-all duration-300
+                      focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:bg-white/10" />
+      </div>
+
+      <div>
+        <label for="input-subject" class="block text-xs text-stone-400 mb-1.5">วิชา</label>
+        <input id="input-subject" type="text" required maxlength="40"
+               placeholder="เช่น คณิตศาสตร์"
+               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-stone-500
+                      outline-none transition-all duration-300
+                      focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20 focus:bg-white/10" />
+      </div>
+
+      <div>
+        <label for="input-deadline" class="block text-xs text-stone-400 mb-1.5">กำหนดส่ง (วันที่ &amp; เวลา)</label>
+        <input id="input-deadline" type="datetime-local" required
+               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-stone-200
+                      outline-none transition-all duration-300
+                      focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20 focus:bg-white/10" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-xs text-stone-400 mb-1.5">ระดับความสำคัญ</label>
+        <div class="flex gap-2" id="priority-chips">
+          <button type="button" data-p="low"  class="chip flex-1 border border-white/10 rounded-xl py-2.5 text-xs font-semibold text-stone-400">🟡 ชิล ๆ</button>
+          <button type="button" data-p="mid"  class="chip flex-1 border border-white/10 rounded-xl py-2.5 text-xs font-semibold text-stone-400 active-mid">🟠 ปกติ</button>
+          <button type="button" data-p="high" class="chip flex-1 border border-white/10 rounded-xl py-2.5 text-xs font-semibold text-stone-400">🔴 ด่วนมาก</button>
+        </div>
+      </div>
+
+      <button type="submit"
+              class="md:col-span-2 mt-1 bg-gradient-to-r from-orange-600 to-amber-500 text-black font-bold
+                     py-3.5 rounded-xl tracking-wide transition-all duration-300
+                     hover:shadow-[0_0_28px_rgba(255,122,0,0.6)] active:scale-[0.97]">
+        🚀 เพิ่มงาน
+      </button>
+    </form>
+  </section>
+
+  <!-- ============ TASK LIST ============ -->
+  <section>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h2 class="text-sm font-semibold uppercase tracking-widest text-amber-300">ภารกิจของคุณ</h2>
+      <button id="clear-done" class="text-xs text-stone-500 hover:text-red-400 active:text-red-400 transition-colors duration-300 hidden">
+        ลบงานที่เสร็จแล้ว ✕
+      </button>
     </div>
-    <div class="w-px h-10 bg-orange-500/20"></div>
-    <div class="text-center flex-1 sm:flex-none min-w-[60px]">
-      <p id="stat-percent" class="text-2xl font-bold text-yellow-300">0%</p>
-      <p class="text-[10px] sm:text-xs text-stone-400 uppercase tracking-widest">ความคืบหน้า</p>
+
+    <div class="filter-scroll flex gap-2 mb-5 -mx-1 px-1" id="filters">
+      <button data-f="all"     class="filter-btn active text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">ทั้งหมด</button>
+      <button data-f="pending" class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">⏳ ค้างอยู่</button>
+      <button data-f="done"    class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">✅ เสร็จแล้ว</button>
+      <button data-f="overdue" class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">🔥 เลยกำหนด</button>
     </div>
-  </div>
-  <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
-    <div id="progress-bar" class="h-full rounded-full shimmer bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 transition-all duration-700" style="width:0%"></div>
-  </div>
-  <p id="cheer" class="text-xs text-stone-500 mt-2 h-4"></p>
+
+    <div id="task-list" class="space-y-4"></div>
+
+    <div id="empty-state" class="glass rounded-2xl p-8 sm:p-10 text-center hidden">
+      <p class="text-5xl mb-3">🏮</p>
+      <p class="text-stone-300 font-semibold">เคลียร์หมดแล้ว เก่งมาก!</p>
+      <p class="text-stone-500 text-sm mt-1">เพิ่มการบ้านชิ้นแรกของคุณด้านบนเพื่อเริ่มนับถอยหลัง</p>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-stone-600 mt-10 md:mt-12 safe-bottom pb-6">
+    ข้อมูลถูกบันทึกไว้ในเบราว์เซอร์ของคุณ · KMITL HOMEWORK
+  </footer>
 </div>
-<form id="task-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div class="md:col-span-2">
-    <label for="input-title" class="block text-xs text-stone-400 mb-1.5">รายละเอียดงาน</label>
-    <input id="input-title" type="text" required maxlength="80"
-           placeholder="เช่น ทำโจทย์แคลคูลัสให้เสร็จ (บทที่ 4)"
-           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-stone-500
-                  outline-none transition-all duration-300
-                  focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:bg-white/10" />
-  </div>
 
-  <div>
-    <label for="input-subject" class="block text-xs text-stone-400 mb-1.5">วิชา</label>
-    <input id="input-subject" type="text" required maxlength="40"
-           placeholder="เช่น คณิตศาสตร์"
-           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-stone-500
-                  outline-none transition-all duration-300
-                  focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20 focus:bg-white/10" />
-  </div>
+<div id="toast-box" class="toast-safe fixed left-1/2 -translate-x-1/2 z-50 space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
 
-  <div>
-    <label for="input-deadline" class="block text-xs text-stone-400 mb-1.5">กำหนดส่ง (วันที่ &amp; เวลา)</label>
-    <input id="input-deadline" type="datetime-local" required
-           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-stone-200
-                  outline-none transition-all duration-300
-                  focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20 focus:bg-white/10" />
-  </div>
+<script>
+/* ===== ตรวจอุปกรณ์ ===== */
+const isMobile = matchMedia('(max-width: 640px)').matches;
+const isTouch = 'ontouchstart' in window;
 
-  <div class="md:col-span-2">
-    <label class="block text-xs text-stone-400 mb-1.5">ระดับความสำคัญ</label>
-    <!-- 📱 MOBILE: py-3 ขยายพื้นที่แตะ >= 44px ตามมาตรฐาน touch target -->
-    <div class="flex gap-2" id="priority-chips">
-      <button type="button" data-p="low"  class="chip flex-1 border border-white/10 rounded-xl py-3 md:py-2 text-xs font-semibold text-stone-400">🟢 ชิล ๆ</button>
-      <button type="button" data-p="mid"  class="chip flex-1 border border-white/10 rounded-xl py-3 md:py-2 text-xs font-semibold text-stone-400 active-mid">🟠 ปกติ</button>
-      <button type="button" data-p="high" class="chip flex-1 border border-white/10 rounded-xl py-3 md:py-2 text-xs font-semibold text-stone-400">🔴 ด่วนมาก</button>
-    </div>
-  </div>
+/* ===== ดาวพื้นหลัง (ลดจำนวนบนมือถือ ประหยัดแบต) ===== */
+const starCount = isMobile ? 30 : 70;
+for (let i = 0; i < starCount; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2.5 + 1;
+  s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*4).toFixed(1)}s`;
+  document.body.appendChild(s);
+}
 
-  <button type="submit"
-          class="md:col-span-2 mt-1 bg-gradient-to-r from-orange-600 to-amber-500 text-black font-bold
-                 py-3.5 md:py-3 rounded-xl tracking-wide transition-all duration-300
-                 hover:shadow-[0_0_28px_rgba(255,122,0,0.6)] hover:scale-[1.015] active:scale-[0.98]">
-    🚀 เพิ่มงาน
-  </button>
-</form>
-<!-- 📱 MOBILE: แถบ filter ปัดเลื่อนแนวนอนได้ -->
-<div class="filter-scroll flex gap-2 mb-3" id="filters">
-  <button data-f="all"     class="filter-btn active text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">ทั้งหมด</button>
-  <button data-f="pending" class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">⏳ ค้างอยู่</button>
-  <button data-f="done"    class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">✅ เสร็จแล้ว</button>
-  <button data-f="overdue" class="filter-btn text-xs border border-white/10 rounded-full px-4 py-2 text-stone-400">🔥 เลยกำหนด</button>
-</div>
+/* ===== นาฬิกา ===== */
+const clockEl = document.getElementById('clock');
+function tickClock() {
+  const now = new Date();
+  clockEl.textContent = now.toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+    + ' · ' + now.toLocaleTimeString('th-TH');
+}
+tickClock(); setInterval(tickClock, 1000);
 
-<!-- 📱 MOBILE: คำใบ้ swipe แสดงเฉพาะจอสัมผัส -->
-<p id="swipe-tip" class="text-[11px] text-stone-600 mb-4 hidden">💡 เคล็ดลับ: ปัดการ์ดไปทางซ้ายเพื่อลบงาน</p>
+/* ===== state ===== */
+const KEY = 'kmitl-homework-tasks';
+let tasks = JSON.parse(localStorage.getItem(KEY) || '[]');
+let currentFilter = 'all';
+let currentPriority = 'mid';
+const save = () => localStorage.setItem(KEY, JSON.stringify(tasks));
 
-<div id="task-list" class="space-y-4"></div>
+/* ===== priority chips ===== */
+const chipBox = document.getElementById('priority-chips');
+chipBox.addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  currentPriority = btn.dataset.p;
+  chipBox.querySelectorAll('button').forEach(b => b.classList.remove('active-low','active-mid','active-high'));
+  btn.classList.add('active-' + currentPriority);
+  vibrate(10);
+});
 
-<div id="empty-state" class="glass rounded-2xl p-10 text-center hidden">
-  <p class="text-5xl mb-3">🏮</p>
-  <p class="text-stone-300 font-semibold">เคลียร์หมดแล้ว เก่งมาก!</p>
-  <p class="text-stone-500 text-sm mt-1">เพิ่มการบ้านชิ้นแรกของคุณด้านบนเพื่อเริ่มนับถอยหลัง</p>
-</div>
+/* ===== สั่นเบา ๆ บนมือถือ (haptic feedback) ===== */
+function vibrate(ms) { if (navigator.vibrate) navigator.vibrate(ms); }
+
+/* ===== เพิ่มงาน ===== */
+const form = document.getElementById('task-form');
+const dlInput = document.getElementById('input-deadline');
+const pad = n => String(n).padStart(2,'0');
+const now0 = new Date();
+dlInput.min = `${now0.getFullYear()}-${pad(now0.getMonth()+1)}-${pad(now0.getDate())}T${pad(now0.getHours())}:${pad(now0.getMinutes())}`;
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  tasks.push({
+    id: Date.now(),
+    title: document.getElementById('input-title').value.trim(),
+    subject: document.getElementById('input-subject').value.trim(),
+    deadline: dlInput.value,
+    priority: currentPriority,
+    done: false
+  });
+  save(); render();
+  form.reset();
+  document.activeElement.blur(); // ปิดคีย์บอร์ดมือถือหลังเพิ่มงาน
+  vibrate(20);
+  toast('🚀 เพิ่มภารกิจใหม่แล้ว!', 'amber');
+});
+
+/* ===== filters ===== */
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  currentFilter = btn.dataset.f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+
+/* ===== helpers ===== */
+const PRIO = {
+  low:  { label:'🟡 ชิล ๆ',   cls:'bg-amber-300/10 text-amber-200 border-amber-300/30' },
+  mid:  { label:'🟠 ปกติ',    cls:'bg-orange-400/10 text-orange-300 border-orange-400/30' },
+  high: { label:'🔴 ด่วนมาก', cls:'bg-red-500/10 text-red-400 border-red-500/30' }
+};
+
+function countdown(deadline) {
+  let diff = new Date(deadline) - Date.now();
+  const late = diff < 0;
+  diff = Math.abs(diff);
+  const d = Math.floor(diff / 864e5);
+  const h = Math.floor(diff % 864e5 / 36e5);
+  const m = Math.floor(diff % 36e5 / 6e4);
+  const s = Math.floor(diff % 6e4 / 1e3);
+  let txt = d > 0 ? `${d} วัน ${h} ชม.` : h > 0 ? `${h} ชม. ${m} นาที` : `${m} นาที ${s} วิ`;
+  return { late, txt: late ? `เลยกำหนด ${txt} 💀` : `เหลือ ${txt}`, ms: new Date(deadline) - Date.now() };
+}
+
+function urgencyStyle(ms, done) {
+  if (done) return { border:'border-l-orange-500/60', text:'text-stone-500', extra:'' };
+  if (ms < 0)      return { border:'border-l-red-600',    text:'text-red-400 font-bold',    extra:'urgent' };
+  if (ms < 36e5)   return { border:'border-l-red-500',    text:'text-red-300 font-bold',    extra:'urgent' };
+  if (ms < 864e5)  return { border:'border-l-orange-500', text:'text-orange-300 font-semibold', extra:'' };
+  if (ms < 3*864e5)return { border:'border-l-amber-400',  text:'text-amber-300', extra:'' };
+  return { border:'border-l-yellow-300', text:'text-yellow-200', extra:'' };
+}
+
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ===== render ===== */
+const listEl = document.getElementById('task-list');
+const emptyEl = document.getElementById('empty-state');
+
+function render() {
+  tasks.sort((a,b) => a.done - b.done || new Date(a.deadline) - new Date(b.deadline));
+  let shown = tasks.filter(t =>
+    currentFilter === 'pending' ? !t.done :
+    currentFilter === 'done'    ? t.done :
+    currentFilter === 'overdue' ? (!t.done && new Date(t.deadline) < Date.now()) : true
+  );
+
+  listEl.innerHTML = shown.map((t, i) => {
+    const cd = countdown(t.deadline);
+    const u = urgencyStyle(cd.ms, t.done);
+    const p = PRIO[t.priority] || PRIO.mid;
+    const dl = new Date(t.deadline).toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    return `
+    <div class="task-card glass rounded-2xl p-4 sm:p-5 border-l-4 ${u.border} ${u.extra} transition-all duration-300 ${t.done ? 'opacity-60' : ''}"
+         style="animation-delay:${i * 60}ms" data-id="${t.id}">
+      <div class="flex items-start gap-3 sm:gap-4">
+        <button class="check-btn done-toggle shrink-0 w-11 h-11 -m-1.5 flex items-center justify-center" aria-label="ติ๊กเสร็จ">
+          <span class="w-7 h-7 rounded-lg border-2 border-orange-400/40 flex items-center justify-center text-sm font-bold ${t.done ? 'done check-btn' : ''}">${t.done ? '✓' : ''}</span>
+        </button>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-stone-100 text-sm sm:text-base ${t.done ? 'line-through text-stone-500' : ''} break-words">${esc(t.title)}</p>
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+            <span class="text-[11px] px-2.5 py-0.5 rounded-full border bg-orange-400/10 text-orange-300 border-orange-400/30">📚 ${esc(t.subject)}</span>
+            <span class="text-[11px] px-2.5 py-0.5 rounded-full border ${p.cls}">${p.label}</span>
+            <span class="text-[11px] text-stone-500">🗓️ ${dl} น.</span>
+          </div>
+          <p class="cd-text text-xs sm:text-sm mt-2.5 ${u.text}" data-deadline="${t.deadline}" data-done="${t.done}">⏱️ ${t.done ? 'เสร็จเรียบร้อย ✨' : cd.txt}</p>
+        </div>
+        <button class="del-btn shrink-0 w-11 h-11 -m-1.5 flex items-center justify-center text-stone-600 active:text-red-400 active:scale-125 transition-all duration-300 text-lg" aria-label="ลบงาน">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  emptyEl.classList.toggle('hidden', shown.length > 0);
+
+  const done = tasks.filter(t => t.done).length;
+  const pct = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+  setStat('stat-pending', tasks.length - done);
+  setStat('stat-done', done);
+  setStat('stat-percent', pct + '%');
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('cheer').textContent =
+    !tasks.length ? '' : pct === 100 ? '🏆 ครบ 100%! สุดยอดไปเลย!' :
+    pct >= 70 ? '🔥 อีกนิดเดียวจะครบแล้ว สู้ ๆ!' :
+    pct >= 30 ? '💪 กำลังไปได้สวย!' : '🌱 เริ่มต้นก็คือชัยชนะครึ่งหนึ่งแล้ว!';
+  document.getElementById('clear-done').classList.toggle('hidden', done === 0);
+}
+
+function setStat(id, val) {
+  const el = document.getElementById(id);
+  if (el.textContent !== String(val)) {
+    el.textContent = val;
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  }
+}
+
+/* ===== อัปเดต countdown ทุกวินาที (หยุดเมื่อพับแอป ประหยัดแบต) ===== */
+let cdTimer = setInterval(updateCountdowns, 1000);
+function updateCountdowns() {
+  document.querySelectorAll('.cd-text').forEach(el => {
+    if (el.dataset.done === 'true') return;
+    el.textContent = '⏱️ ' + countdown(el.dataset.deadline).txt;
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  clearInterval(cdTimer);
+  if (!document.hidden) {
+    updateCountdowns(); render();
+    cdTimer = setInterval(updateCountdowns, 1000);
+  }
+});
+
+/* ===== คลิกในลิสต์ ===== */
+listEl.addEventListener('click', e => {
+  const card = e.target.closest('.task-card'); if (!card) return;
+  const id = Number(card.dataset.id);
+  const task = tasks.find(t => t.id === id);
+
+  if (e.target.closest('.done-toggle')) {
+    task.done = !task.done;
+    save(); render();
+    if (task.done) {
+      confettiBurst(e.clientX || innerWidth/2, e.clientY || innerHeight/2);
+      vibrate([20, 50, 20]);
+      toast('🎉 เยี่ยมมาก! เสร็จไปอีกหนึ่งงาน', 'orange');
+    }
+  }
+  if (e.target.closest('.del-btn')) {
+    card.classList.add('task-leaving');
+    vibrate(15);
+    setTimeout(() => { tasks = tasks.filter(t => t.id !== id); save(); render(); }, 380);
+    toast('🗑️ ลบงานแล้ว', 'red');
+  }
+});
+
+document.getElementById('clear-done').addEventListener('click', () => {
+  tasks = tasks.filter(t => !t.done);
+  save(); render();
+  toast('🧹 เคลียร์งานที่เสร็จแล้วเรียบร้อย', 'amber');
+});
+
+/* ===== toast ===== */
+function toast(msg, color) {
+  const colors = { amber:'border-amber-400/40 text-amber-200', orange:'border-orange-400/40 text-orange-200', red:'border-red-400/40 text-red-200' };
+  const t = document.createElement('div');
+  t.className = `toast glass rounded-xl px-5 py-2.5 text-sm border text-center ${colors[color]}`;
+  t.textContent = msg;
+  document.getElementById('toast-box').appendChild(t);
+  setTimeout(() => { t.classList.add('toast-out'); setTimeout(() => t.remove(), 400); }, 2200);
+}
+
+/* ===== confetti (รองรับจอ retina + ลดจำนวนบนมือถือ) ===== */
+const cvs = document.getElementById('confetti'), ctx = cvs.getContext('2d');
+let particles = [];
+function resize(){
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cvs.width = innerWidth * dpr; cvs.height = innerHeight * dpr;
+  cvs.style.width = innerWidth + 'px'; cvs.style.height = innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resize(); addEventListener('resize', resize);
+
+function confettiBurst(x, y) {
+  const colors = ['#ff7a00','#ffb800','#ff3c1e','#ffd966','#ff9d2e','#fff3d6'];
+  const count = isMobile ? 40 : 60;
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, sp = Math.random() * 7 + 3;
+    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 3,
+      size: Math.random()*7+3, color: colors[Math.random()*colors.length|0],
+      rot: Math.random()*360, vr: Math.random()*12-6, life: 1 });
+  }
+}
+(function loop() {
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.22; p.rot += p.vr; p.life -= 0.014;
+    ctx.save();
+    ctx.globalAlpha = Math.max(p.life, 0);
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    ctx.restore();
+  });
+  requestAnimationFrame(loop);
+})();
+
+render();
+</script>
+</body>
+</html>
